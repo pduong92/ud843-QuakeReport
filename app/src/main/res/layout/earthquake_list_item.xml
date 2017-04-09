@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/earthquake_item_height"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/magnitude"
+        android:layout_width="@dimen/magnitude_circle_diameter"
+        android:layout_height="@dimen/magnitude_circle_diameter"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/magnitude_circle"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:id="@+id/locations"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@id/magnitude"
+        android:layout_toEndOf="@id/magnitude"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp">
+
+        <TextView
+            android:id="@+id/distance"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="bottom"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:textAllCaps="true"
+            android:textSize="12sp"
+            android:textColor="@color/textColorEarthquakeDetails"/>
+
+        <TextView
+            android:id="@+id/location"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="top"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="2"
+            android:textSize="16sp"
+            android:textColor="@color/textColorEarthLocation"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true">
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="right"
+            android:gravity="bottom"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="12sp"
+            android:textColor="@color/textColorEarthquakeDetails"/>
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="right"
+            android:gravity="top"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="12sp"
+            android:textColor="@color/textColorEarthquakeDetails"/>
+    </LinearLayout>
+
+</RelativeLayout>
+
+    <!-- android:layout_alignParentStart="true" To better support right-to-left layouts -->
+
+    <!-- android:layout_toEndOf="@id/magnitude" To better support right-to-left layouts -->
+
+    <!-- android:layout_marginStart="16dp" To better support right-to-left layouts -->
+
+    <!-- android:layout_alignParentEnd="true" To better support right-to-left layouts -->
+
+    <!-- android:layout_gravity="end" Consider changing 'right' to 'end' to ensure correct behavior in right-to-left layouts -->
