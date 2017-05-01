@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/earthquake_list_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="@dimen/earthquake_item_height"
@@ -51,11 +52,12 @@
             android:maxLines="2"
             android:textSize="16sp"
             android:textColor="@color/textColorEarthLocation"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/datetime_stamp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"

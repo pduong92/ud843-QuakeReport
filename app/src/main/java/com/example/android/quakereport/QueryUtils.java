@@ -1,19 +1,34 @@
 package com.example.android.quakereport;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.sql.Date;
+
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Created by phduo on 4/8/2017.
  */
 
 public final class QueryUtils {
+
+    private static final String LOG_TAG = "QueryUtils";
+
     /** Sample JSON response for a USGS query */
     private static final String SAMPLE_JSON_RESPONSE = "{\"type\":\"FeatureCollection\",\"metadata\":{\"generated\":1462295443000,\"url\":\"http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2016-01-01&endtime=2016-01-31&minmag=6&limit=10\",\"title\":\"USGS Earthquakes\",\"status\":200,\"api\":\"1.5.2\",\"limit\":10,\"offset\":1,\"count\":10},\"features\":[{\"type\":\"Feature\",\"properties\":{\"mag\":7.2,\"place\":\"88km N of Yelizovo, Russia\",\"time\":1454124312220,\"updated\":1460674294040,\"tz\":720,\"url\":\"http://earthquake.usgs.gov/earthquakes/eventpage/us20004vvx\",\"detail\":\"http://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us20004vvx&format=geojson\",\"felt\":2,\"cdi\":3.4,\"mmi\":5.82,\"alert\":\"green\",\"status\":\"reviewed\",\"tsunami\":1,\"sig\":798,\"net\":\"us\",\"code\":\"20004vvx\",\"ids\":\",at00o1qxho,pt16030050,us20004vvx,gcmt20160130032510,\",\"sources\":\",at,pt,us,gcmt,\",\"types\":\",cap,dyfi,finite-fault,general-link,general-text,geoserve,impact-link,impact-text,losspager,moment-tensor,nearby-cities,origin,phase-data,shakemap,tectonic-summary,\",\"nst\":null,\"dmin\":0.958,\"rms\":1.19,\"gap\":17,\"magType\":\"mww\",\"type\":\"earthquake\",\"title\":\"M 7.2 - 88km N of Yelizovo, Russia\"},\"geometry\":{\"type\":\"Point\",\"coordinates\":[158.5463,53.9776,177]},\"id\":\"us20004vvx\"},\n" +
             "{\"type\":\"Feature\",\"properties\":{\"mag\":6.1,\"place\":\"94km SSE of Taron, Papua New Guinea\",\"time\":1453777820750,\"updated\":1460156775040,\"tz\":600,\"url\":\"http://earthquake.usgs.gov/earthquakes/eventpage/us20004uks\",\"detail\":\"http://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us20004uks&format=geojson\",\"felt\":null,\"cdi\":null,\"mmi\":4.1,\"alert\":\"green\",\"status\":\"reviewed\",\"tsunami\":1,\"sig\":572,\"net\":\"us\",\"code\":\"20004uks\",\"ids\":\",us20004uks,gcmt20160126031023,\",\"sources\":\",us,gcmt,\",\"types\":\",cap,geoserve,losspager,moment-tensor,nearby-cities,origin,phase-data,shakemap,tectonic-summary,\",\"nst\":null,\"dmin\":1.537,\"rms\":0.74,\"gap\":25,\"magType\":\"mww\",\"type\":\"earthquake\",\"title\":\"M 6.1 - 94km SSE of Taron, Papua New Guinea\"},\"geometry\":{\"type\":\"Point\",\"coordinates\":[153.2454,-5.2952,26]},\"id\":\"us20004uks\"},\n" +
@@ -38,37 +53,125 @@ public final class QueryUtils {
      * Return a list of {@link Earthquake} objects that has been built up from
      * parsing a JSON response.
      */
-    public static ArrayList<Earthquake> extractEarthquakes() {
+    public static ArrayList<Earthquake> fetchEarthquakes(String urlQuery) {
 
-        ArrayList<Earthquake> earthquakes = new ArrayList<>();
+        if(TextUtils.isEmpty(urlQuery) || urlQuery == null)
+            return null;
+
+        String jsonResponse = "";
+        URL url = createURL(urlQuery);
 
         try {
-            JSONObject root = new JSONObject(SAMPLE_JSON_RESPONSE);
-
-            JSONArray features = root.optJSONArray("features");
-
-            for(int i = 0; i < features.length(); i++) {
-                JSONObject feature = features.optJSONObject(i);
-                JSONObject properties = feature.optJSONObject("properties");
-                double mag = properties.optDouble("mag");
-                String place = properties.optString("place");
-                long time = properties.getLong("time");
-                String url = properties.getString("url");
-
-                earthquakes.add(new Earthquake(mag, place, time, url));
-            }
-
-
-
-        } catch (JSONException e) {
+            jsonResponse = makeHttpRequest(url);
+        } catch (IOException e) {
             // If an error is thrown when executing any of the above statements in the "try" block,
             // catch the exception here, so the app doesn't crash. Print a log message
             // with the message from the exception.
-            Log.e("QueryUtils", "Problem parsing the earthquake JSON results", e);
+            Log.e(LOG_TAG, "Error reading stream", e);
         }
+
+        ArrayList<Earthquake> earthquakes = extractEarthquakeList(jsonResponse);
 
         // Return the list of earthquakes
         return earthquakes;
     }
 
+    public static URL createURL(String urlQuery) {
+        URL url = null;
+        try{
+            url = new URL(urlQuery);
+        }
+        catch (IOException e) {
+            Log.e(LOG_TAG, "Error while creating URL link.", e);
+        }
+
+        return url;
+    }
+
+    public static String makeHttpRequest(URL url) throws IOException {
+        String jsonResponse = "";
+        InputStream inStream = null;
+        HttpsURLConnection urlConnection = null;
+        try {
+            urlConnection = (HttpsURLConnection) url.openConnection();
+            urlConnection.setReadTimeout(10000);
+            urlConnection.setConnectTimeout(15000);
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                inStream = urlConnection.getInputStream();
+                jsonResponse = readInputStream(inStream);
+            }
+        }catch(IOException e) {
+            Log.e(LOG_TAG, "Error retrieving JSON response", e);
+            Log.getStackTraceString(e);
+        }
+        finally {
+            if(urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if(inStream != null) {
+                inStream.close();
+            }
+        }
+        return jsonResponse;
+    }
+
+    public static String readInputStream(InputStream inputstream) throws IOException {
+        StringBuilder result = new StringBuilder();
+
+        if(inputstream != null) {
+            InputStreamReader isreader = new InputStreamReader(inputstream, Charset.forName("UTF-8"));
+            BufferedReader breader = new BufferedReader(isreader);
+            String line = breader.readLine();
+            while(line != null) {
+                result.append(line);
+                line = breader.readLine();
+            }
+        }
+
+        return result.toString();
+    }
+
+    public static ArrayList<Earthquake> extractEarthquakeList(String queryJSON) {
+        if(TextUtils.isEmpty(queryJSON) || queryJSON == null) {
+            return null;
+        }
+
+        ArrayList<Earthquake> earthquakeList = new ArrayList<Earthquake>();
+        try {
+            JSONObject root = new JSONObject(queryJSON);
+            JSONArray features = root.optJSONArray("features");
+
+            for(int i = 0; i < features.length(); i++) {
+                earthquakeList.add(extractEarthquake(features,i));
+            }
+        } catch(JSONException e) {
+            Log.e(LOG_TAG, "Error parsing the JSON results", e);
+        }
+        return earthquakeList;
+    }
+
+    public static Earthquake extractEarthquake(JSONArray jarray, int index) {
+        if(index < 0 || index > jarray.length() || jarray.length() == 0) {
+            return null;
+        }
+
+        Earthquake result = null;
+        try{
+            JSONObject feature = jarray.optJSONObject(index);
+            JSONObject properties = feature.optJSONObject("properties");
+            double mag = properties.optDouble("mag");
+            String place = properties.optString("place");
+            long time = properties.getLong("time");
+            String url = properties.getString("url");
+
+            result = new Earthquake(mag, place, time, url);
+        }catch(JSONException e) {
+            Log.e(LOG_TAG, "Problem extracting JSON properties", e);
+        }
+
+        return result;
+    }
 }

@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public class EarthquakeAdapter extends ArrayAdapter<Earthquake> {
         super(content, 0, objects);
     }
 
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View earthquakeView = convertView;
         if(earthquakeView == null) {
@@ -55,8 +58,20 @@ public class EarthquakeAdapter extends ArrayAdapter<Earthquake> {
 
         TextView timeView = (TextView)earthquakeView.findViewById(R.id.time);
         timeView.setText(earthquake.getTime());
+/*
+//Attempt to set MaxWidth for Location TextView to avoid long locations from overlapping the date/time View
 
+        RelativeLayout rootLayout = (RelativeLayout)earthquakeView.findViewById(R.id.earthquake_list_layout);
 
+        int rootWidth = rootLayout.getMeasuredWidth();
+        int magWidth = magnitudeView.getMeasuredWidth();
+        int dateWidth = dateView.getMeasuredWidth();
+
+        int maxLocationWidth = rootLayout.getMeasuredWidth() - magnitudeView.getMeasuredWidth() - dateView.getMeasuredWidth();
+        //locationView.setMaxWidth(maxLocationWidth);
+
+        Log.d("DEBUG WIDTH", "maxLocationWidth: " + maxLocationWidth + ", rootWidth: " + rootWidth + ", magWidth: " + magWidth + ", dateWidth: " + dateWidth);
+*/
 
         return earthquakeView;
     }
@@ -106,4 +121,5 @@ public class EarthquakeAdapter extends ArrayAdapter<Earthquake> {
     public String formatMagnitude(double magnitude) {
         return formatter.format(magnitude);
     }
+
 }
