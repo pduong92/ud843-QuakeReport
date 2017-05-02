@@ -98,18 +98,11 @@ public class EarthquakeAdapter extends ArrayAdapter<Earthquake> {
     public String[] splitLocation(String location) {
         String[] components = new String[2];
 
-        if(location.contains("of")) {
+        if(location.contains(LOCATION_SEPERATOR)) {
             components = location.split(LOCATION_SEPERATOR);
             components[0] = (components[0] + LOCATION_SEPERATOR).trim().toUpperCase();
         }
 
-        /*
-        int index = location.indexOf("of");
-        if(index != -1) {
-            components[0] = location.substring(0, index + 2).trim().toUpperCase();
-            components[1] = location.substring(index + 2).trim();
-        }
-        */
         else {
             components[0] = "";
             components[1] = location;
